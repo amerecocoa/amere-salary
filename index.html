@@ -2,12 +2,103 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>AMÈRE Invoice</title>
+  <title>AMÈRE — Invoice</title>
+  <style>
+    body {
+      font-family: Georgia, serif;
+      background: #f5f2ee;
+      padding: 40px;
+    }
+    .invoice {
+      max-width: 600px;
+      margin: auto;
+      background: #ffffff;
+      padding: 32px;
+      border: 1px solid #ddd;
+    }
+    h1 {
+      text-align: center;
+      letter-spacing: 2px;
+      margin-bottom: 10px;
+    }
+    .line {
+      border-top: 1px solid #ccc;
+      margin: 20px 0;
+    }
+    .item {
+      margin: 6px 0;
+    }
+    .total {
+      font-weight: bold;
+      margin-top: 15px;
+    }
+    .note {
+      margin-top: 25px;
+      font-size: 0.9em;
+      color: #555;
+    }
+  </style>
 </head>
 <body>
 
-<h1>AMÈRE — INVOICE</h1>
-<p>Halaman invoice siap.</p>
+<div class="invoice">
+  <h1>AMÈRE — INVOICE</h1>
+
+  <p><strong>Customer:</strong> <span id="customer">-</span></p>
+  <p><strong>Date:</strong> <span id="date"></span></p>
+
+  <div class="line"></div>
+
+  <div id="items">
+    <em>Tidak ada item dipilih.</em>
+  </div>
+
+  <p class="total">Total: <span id="total">Rp 0</span></p>
+
+  <div class="line"></div>
+
+  <p class="note">
+    ℹ️ Mohon screenshoot invoice ini dan kirimkan ke DM AMÈRE.
+    Pastikan Anda menekan Submit agar pesanan dapat diproses.
+  </p>
+</div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+
+  const products = {
+    dc70: { name: "Dark Chocolate 70%", price: 85000 },
+    dc85: { name: "Dark Chocolate 85%", price: 90000 },
+    milk: { name: "Milk Chocolate", price: 70000 },
+    truffle: { name: "Classic Cocoa-Dusted Truffles", price: 100000 },
+  };
+
+  document.getElementById("customer").innerText =
+    params.get("name") || "-";
+
+  document.getElementById("date").innerText =
+    new Date().toLocaleDateString("id-ID");
+
+  let total = 0;
+  let itemsHTML = "";
+
+  for (const key in products) {
+    const qty = Number(params.get(key)) || 0;
+    if (qty > 0) {
+      const subtotal = qty * products[key].price;
+      total += subtotal;
+      itemsHTML += `<div class="item">
+        • ${products[key].name} × ${qty}
+      </div>`;
+    }
+  }
+
+  document.getElementById("items").innerHTML =
+    itemsHTML || "<em>Tidak ada item dipilih.</em>";
+
+  document.getElementById("total").innerText =
+    "Rp " + total.toLocaleString("id-ID");
+</script>
 
 </body>
 </html>
