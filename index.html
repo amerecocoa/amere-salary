@@ -1,51 +1,86 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <title>AMÈRE — Invoice</title>
-  <style>
-    body {
-      font-family: Georgia, serif;
-      background: #f5f2ee;
-      padding: 40px;
-    }
-    .invoice {
-      max-width: 600px;
-      margin: auto;
-      background: #ffffff;
-      padding: 32px;
-      border: 1px solid #ddd;
-    }
-    h1 {
-      text-align: center;
-      letter-spacing: 2px;
-      margin-bottom: 10px;
-    }
-    .line {
-      border-top: 1px solid #ccc;
-      margin: 20px 0;
-    }
-    .item {
-      margin: 6px 0;
-    }
-    .total {
-      font-weight: bold;
-      margin-top: 15px;
-    }
-    .note {
-      margin-top: 25px;
-      font-size: 0.9em;
-      color: #555;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>AMÈRE — Invoice</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+  body {
+    font-family: Georgia, serif;
+    background: #f5f2ee;
+    padding: 24px;
+  }
+  .invoice {
+    max-width: 620px;
+    margin: auto;
+    background: #ffffff;
+    padding: 28px;
+    border: 1px solid #ddd;
+  }
+  h1 {
+    text-align: center;
+    letter-spacing: 2px;
+    margin-bottom: 14px;
+  }
+  .meta p {
+    margin: 4px 0;
+    font-size: 0.95em;
+  }
+  .line {
+    border-top: 1px solid #ccc;
+    margin: 18px 0;
+  }
+  .item {
+    margin: 8px 0;
+    font-size: 0.95em;
+  }
+  .item span {
+    float: right;
+  }
+  .total {
+    font-weight: bold;
+    font-size: 1.05em;
+    margin-top: 12px;
+  }
+  .note {
+    margin-top: 18px;
+    font-size: 0.9em;
+    color: #555;
+  }
+  .download {
+    margin-top: 22px;
+    text-align: center;
+  }
+  button {
+    background: #000;
+    color: #fff;
+    border: none;
+    padding: 10px 18px;
+    cursor: pointer;
+    font-size: 0.9em;
+  }
+  button:hover {
+    opacity: 0.85;
+  }
+
+  @media (max-width: 480px) {
+    body { padding: 12px; }
+    .invoice { padding: 20px; }
+  }
+</style>
 </head>
+
 <body>
 
-<div class="invoice">
+<div class="invoice" id="invoice">
   <h1>AMÈRE — INVOICE</h1>
 
-  <p><strong>Customer:</strong> <span id="customer">-</span></p>
-  <p><strong>Date:</strong> <span id="date"></span></p>
+  <div class="meta">
+    <p><strong>Invoice No:</strong> <span id="invoiceNo"></span></p>
+    <p><strong>Customer:</strong> <span id="customer">AMERE</span></p>
+    <p><strong>Date:</strong> <span id="datetime"></span></p>
+  </div>
 
   <div class="line"></div>
 
@@ -57,47 +92,101 @@
 
   <div class="line"></div>
 
+  <div id="request" class="note"></div>
+
   <p class="note">
-    ℹ️ Mohon screenshoot invoice ini dan kirimkan ke DM AMÈRE.
+    ℹ️ Mohon screenshoot atau unduh invoice ini dan kirimkan ke DM AMÈRE.
     Pastikan Anda menekan Submit agar pesanan dapat diproses.
   </p>
 </div>
 
+<div class="download">
+  <button onclick="downloadInvoice()">Download Invoice (PNG)</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
 <script>
-  const params = new URLSearchParams(window.location.search);
+const params = new URLSearchParams(window.location.search);
 
-  const products = {
-    dc70: { name: "Dark Chocolate 70%", price: 85000 },
-    dc85: { name: "Dark Chocolate 85%", price: 90000 },
-    milk: { name: "Milk Chocolate", price: 70000 },
-    truffle: { name: "Classic Cocoa-Dusted Truffles", price: 100000 },
-  };
+// ===== PRODUK =====
+const products = {
+  dc70: { name: "Dark Chocolate 70%", price: 85000 },
+  dc85: { name: "Dark Chocolate 85%", price: 90000 },
+  milk: { name: "Milk Chocolate", price: 70000 },
+  truffle: { name: "Classic Cocoa-Dusted Truffles", price: 100000 },
+};
 
-  document.getElementById("customer").innerText =
-    params.get("name") || "-";
+// ===== CUSTOMER =====
+const customerName = params.get("name");
+document.getElementById("customer").innerText =
+  customerName && customerName.trim() !== "" ? customerName : "AMERE";
 
-  document.getElementById("date").innerText =
-    new Date().toLocaleDateString("id-ID");
+// ===== DATE & TIME =====
+const now = new Date();
+document.getElementById("datetime").innerText =
+  now.toLocaleDateString("id-ID") + " • " +
+  now.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
 
-  let total = 0;
-  let itemsHTML = "";
+// ===== INVOICE NUMBER =====
+const pad = n => n.toString().padStart(2, "0");
+const invoiceNo =
+  "AME-" +
+  now.getFullYear() +
+  pad(now.getMonth() + 1) +
+  pad(now.getDate()) + "-" +
+  pad(now.getHours()) +
+  pad(now.getMinutes()) +
+  pad(now.getSeconds());
 
-  for (const key in products) {
-    const qty = Number(params.get(key)) || 0;
-    if (qty > 0) {
-      const subtotal = qty * products[key].price;
-      total += subtotal;
-      itemsHTML += `<div class="item">
-        • ${products[key].name} × ${qty}
-      </div>`;
-    }
+document.getElementById("invoiceNo").innerText = invoiceNo;
+
+// ===== ITEMS =====
+let total = 0;
+let itemsHTML = "";
+
+for (const key in products) {
+  const qty = Number(params.get(key)) || 0;
+  if (qty > 0) {
+    const subtotal = qty * products[key].price;
+    total += subtotal;
+    itemsHTML += `
+      <div class="item">
+        ${products[key].name} × ${qty}
+        <span>Rp ${subtotal.toLocaleString("id-ID")}</span>
+      </div>
+    `;
   }
+}
 
-  document.getElementById("items").innerHTML =
-    itemsHTML || "<em>Tidak ada item dipilih.</em>";
+document.getElementById("items").innerHTML =
+  itemsHTML || "<em>Tidak ada item dipilih.</em>";
 
-  document.getElementById("total").innerText =
-    "Rp " + total.toLocaleString("id-ID");
+document.getElementById("total").innerText =
+  "Rp " + total.toLocaleString("id-ID");
+
+// ===== SPECIAL REQUEST =====
+const note = params.get("note");
+if (note && note.trim() !== "") {
+  document.getElementById("request").innerHTML =
+    "<strong>Special Request:</strong><br>" + note;
+}
+
+// ===== DOWNLOAD PNG =====
+function downloadInvoice() {
+  html2canvas(document.getElementById("invoice")).then(canvas => {
+    const link = document.createElement("a");
+
+    const safeCustomer =
+      document.getElementById("customer").innerText
+        .replace(/\s+/g, "_")
+        .replace(/[^a-zA-Z0-9_-]/g, "");
+
+    link.download = `${invoiceNo}-${safeCustomer}.png`;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  });
+}
 </script>
 
 </body>
